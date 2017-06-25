@@ -5,13 +5,13 @@
 
 #define GLEW_STATIC
 #include <GL/glew.h>
-
 #include <SDL2/SDL.h>
 #include <chrono>
 
 // Shader sources
 const GLchar* vertexSource = R"glsl(
     #version 150 core
+
     in vec2 position;
     in vec3 color;
     out vec3 Color;
@@ -19,7 +19,7 @@ const GLchar* vertexSource = R"glsl(
     void main()
     {
         Color = color;
-        gl_Position = vec4(position, 0.0, 1.0);
+        gl_Position = vec4(position.x, position.y, 0.0, 1.0);
     }
 )glsl";
 // uniform vec3 ouColor;
@@ -63,18 +63,24 @@ int main()
     GLuint vbo;
     glGenBuffers(1, &vbo); // Generate 1 buffer
 
-    /*float vertices[] = {
-     0.0f,  0.5f, // Vertex 1 (X, Y)
-     0.5f, -0.5f, // Vertex 2 (X, Y)
-    -0.5f, -0.5f  // Vertex 3 (X, Y)
-  };*/
-
     float vertices[] = {
-     0.0f,  0.5f,   1.0f, 0.0f, 0.0f, // Vertex 1: Red
-     0.5f, -0.5f,   0.0f, 1.0f, 0.0f, // Vertex 2: Green
-    -0.5f, -0.5f,   0.0f, 0.0f, 1.0f  // Vertex 3: Blue
+        -0.5f,  0.5f,   1.0f, 0.0f, 0.0f, // Top-left
+         0.5f,  0.5f,   0.0f, 1.0f, 0.0f, // Top-right
+         0.5f, -0.5f,   0.0f, 0.0f, 1.0f, // Bottom-right
+        -0.5f, -0.5f,   1.0f, 1.0f, 1.0f  // Bottom-left
     };
 
+    GLuint ebo;
+    glGenBuffers(1, &ebo);
+
+    GLuint elements[] = {
+        0, 1, 2,
+        2, 3, 0
+    };
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER,
+        sizeof(elements), elements, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
@@ -106,10 +112,8 @@ int main()
     glEnableVertexAttribArray(colAttrib);
     glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), (void*)(2 * sizeof(GLfloat)));
 
-
     // Get the location of the color uniform
-    GLint uniColor = glGetUniformLocation(shaderProgram, "triangleColor");
-
+    //GLint uniColor = glGetUniformLocation(shaderProgram, "triangleColor");
 
     SDL_Event windowEvent;
     while (true)
@@ -128,7 +132,8 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         //glUniform3f(uniColor,(sin(time * 4.0f) + 1.0f) / 2.0f, 1.0f, 0.3f);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        //glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
         SDL_GL_SwapWindow(window);
     }
