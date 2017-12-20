@@ -4,6 +4,8 @@ For Example:
 
 https://htmlpreview.github.io/?https://github.com/AlexElson/OpenGL/blob/master/WebGL/lighting.html
 
+![Alt Text](/lighting.png?raw=true "Cover")
+
 or
 
 https://htmlpreview.github.io/?https://github.com/AlexElson/OpenGL/blob/master/WebGL/landscape.html
