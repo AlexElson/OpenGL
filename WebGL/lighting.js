@@ -186,7 +186,7 @@ function main() {
     if (m.yturn == 1) drawPlane(gl, solidProgram, m, j, cube);
     if (m.yturn == 0) drawPlane(gl, solidProgram, m, j, plane);
     //Uncomment to add option for spheres
-    //if (m.yturn == 2) drawPlane(gl, solidProgram, m, j, sphere);
+    if (m.yturn == 2) drawPlane(gl, solidProgram, m, j, sphere);
 
     //Port
     setDirLight(gl, solidProgram, m, .3,.3,.3);
@@ -858,7 +858,7 @@ function checkKey(e, m) {
     }
     if (e.keyCode == '84') { //t 3d
       m.yturn++;
-      if (m.yturn > 1){
+      if (m.yturn > 2){
         m.yturn = 0;
       }
 
