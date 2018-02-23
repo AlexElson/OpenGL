@@ -5,9 +5,7 @@ For Example:
 
 https://htmlpreview.github.io/?https://github.com/AlexElson/OpenGL/blob/master/WebGL/lighting.html
 
-![Alt Text](/webgl_port.png?raw=true "Cover")
-
-![Alt text](/webgl_landscape.png?raw=true "Cover")
+![Alt Text](/webgl_port.png?raw=true "Cover") ![Alt text](/webgl_landscape.png?raw=true "Cover")
 
 or
 
