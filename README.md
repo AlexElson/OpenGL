@@ -13,4 +13,4 @@ https://htmlpreview.github.io/?https://github.com/AlexElson/OpenGL/blob/master/W
 
 Textures will not show unless the files are downloaded and run locally with the required textures in the same directory. Simply download the WebGL and lib folders, place them in the same directory, and open any .html file within the WebGL folder.
 
-![Alt Text](/landscape.png?raw=true "Cover")
+![Alt Text](/lighting.png?raw=true "Cover")
