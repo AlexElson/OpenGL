@@ -5,6 +5,7 @@ For Example:
 
 https://htmlpreview.github.io/?https://github.com/AlexElson/OpenGL/blob/master/WebGL/lighting.html
 
+![Alt text](/Screenshots/specular.png?raw=true "Cover")
 ![Alt Text](/Screenshots/webgl_port.png?raw=true "Cover") 
 ![Alt text](/Screenshots/webgl_landscape.png?raw=true "Cover")
 
