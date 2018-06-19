@@ -12,36 +12,43 @@
 */
 
 
-function loadModels(){
+var myCube;
+var mySphere;
+var myTorus;
 
-  loadJSONResource('./myCube.json', function(modelErr, modelObj){
-    if(modelErr){
-      alert("failed to load cube");
-    }
-    else{
-      myCube = modelObj;
-      	//main();
-      }
+
+function loadModels(){
+	    
+		  
+		  
+  loadJSONResource('./myCube.json', function(modelErr3, modelObj3){
+	if(modelErr3){
+	  alert("failed to load cube");
+	}else{
+	  myCube = modelObj3;
+			
+  loadJSONResource('./myTorus.json', function(modelErr4, modelObj4){
+	if(modelErr4){
+	  alert("failed to load cube");
+	}else{
+	  myTorus = modelObj4;
+				  
+  loadJSONResource('./mySphere.json', function(modelErr5, modelObj5){
+	if(modelErr5){
+	  alert("failed to load sphere");
+	}
+	else{
+	  mySphere = modelObj5;
+		main();
+	  }
   });
   
-  loadJSONResource('./myTorus.json', function(modelErr, modelObj){
-    if(modelErr){
-      alert("failed to load cube");
-    }
-    else{
-      myTorus = modelObj;
-      	//main();
-      }
+	}
   });
-
-  loadJSONResource('./mySphere.json', function(modelErr, modelObj){
-    if(modelErr){
-      alert("failed to load sphere");
-    }
-    else{
-      mySphere = modelObj;
-      	main();
-      }
-  });
+			
+	}
+  });	  
+  
   
 }
+
