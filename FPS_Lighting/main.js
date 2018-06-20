@@ -125,14 +125,14 @@ var TEXTURE_FSHADER_SOURCE =
 	vec3 R = reflect(I, testNormal);
 	
 	vec4 color;
-	if (u_Reflect >= 0){ //No Reflection, only Material
-		color = texture2D(u_Sampler, v_TexCoord);
-	}
+	//if (u_Reflect >= 0){ //No Reflection, only Material
+	color = texture2D(u_Sampler, v_TexCoord);
+	//}
 	
 	//vec2 onePixel = vec2(1.0, 1.0) / 1024;
-	if (u_Reflect == 3){ //Reflect (half) and Material
-		color = (textureCube(u_Skybox, R)*.4) + texture2D(u_Sampler, v_TexCoord)*.6;
-	}
+	//if (u_Reflect == 3){ //Reflect (half) and Material
+	//	color = (textureCube(u_Skybox, R)*.4) + texture2D(u_Sampler, v_TexCoord)*.6;
+	//}
 	
 	//vec2 onePixel = vec2(1.0, 1.0) / vec(2048.0,2048.0);
 	
