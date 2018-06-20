@@ -214,15 +214,15 @@ var TEXTURE_FSHADER_SOURCE =
 	//added += fogColor;
 	
     gl_FragColor = vec4(added, color.a);
-	vec4 BrightColor;
+//	vec4 BrightColor;
 	
-	float brightness = dot(gl_FragColor.rgb, vec3(0.4126, 0.7152, 0.4722));
-    if(brightness > 1.0)
-        BrightColor = vec4(gl_FragColor.rgb, 1.0);
-    else
-        BrightColor = vec4(0.0, 0.0, 0.0, 1.0);
+//	float brightness = dot(gl_FragColor.rgb, vec3(0.4126, 0.7152, 0.4722));
+   // if(brightness > 1.0)
+  //      BrightColor = vec4(gl_FragColor.rgb, 1.0);
+    //else
+    //    BrightColor = vec4(0.0, 0.0, 0.0, 1.0);
 		
-	gl_FragColor = BrightColor;
+//	gl_FragColor = BrightColor;
 	
 
   }`
