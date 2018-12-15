@@ -28,24 +28,36 @@ static const char* vertex_source =
     "   in vec4 a_Position; \n" 
     "   in vec4 a_Color; \n"
     "   out vec4 v_Color; \n"
+    "   in vec2 a_TexCoord; \n"
+
+    "   out vec2 v_TexCoord;\n"
+
     "   void main() { \n" 
     //"		gl_Position = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * a_Position; \n"
     "       gl_Position = a_Position * u_ModelMatrix * u_ViewMatrix * u_ProjMatrix;  \n" 
     //"       gl_Position = a_Position + u_Translation;  \n"
     "       v_Color = a_Color; \n"
+    "       v_TexCoord = a_TexCoord;\n"
     "   } \n";
 
 static const char* fragment_source =
     "   #version 130 \n"
     "   in vec4 v_Color; \n"
+
+    "	uniform sampler2D u_Sampler;\n"
+    "	in vec2 v_TexCoord;\n"
+
     "   void main(){ \n" 
-    "       gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0); \n" 
-    "       gl_FragColor = v_Color; \n"
+    "       vec4 color = texture(u_Sampler, v_TexCoord);"
+    //"       gl_FragColor = vec4(0.0, 1.0, 0.0, 1.0); \n" 
+    //"       gl_FragColor = v_Color; \n"
+    "       gl_FragColor = vec4(color.rgb, color.a); \n"
     "   }\n";
 
 typedef enum {
     a_Position,
-    a_Color
+    a_Color,
+    a_TexCoord
 } attrib_id;
 
 struct Matrix4 {
@@ -405,6 +417,58 @@ struct Primitives {
 Primitives oneCube;
 Primitives onePlane;
 
+struct moveMent {
+	float px = 0; //Player Position
+	float py = 0;
+	float pz = 1;
+	float lx = 0; //Look
+	float ly = 0;
+	float lz = 0;
+	float turn = -90;
+	int moveUp = 0;
+	int moveDown = 0;
+	int moveLeft = 0;
+	int moveRight = 0;
+} user;
+
+void NormalKeyHandler(unsigned char key, int x, int y){
+	if (key == 32){ //Space
+		cout << "Jump" << endl;
+	}
+}
+void SpecialKeyUpHandler(int key, int x, int y){
+	if (key == GLUT_KEY_RIGHT) user.moveRight = 0;
+	if (key == GLUT_KEY_LEFT) user.moveLeft = 0;
+	if (key == GLUT_KEY_UP) user.moveUp = 0;
+	if (key == GLUT_KEY_DOWN) user.moveDown = 0;
+}
+void SpecialKeyHandler(int key, int x, int y){
+	if (key == GLUT_KEY_RIGHT) user.moveRight = 1;
+	if (key == GLUT_KEY_LEFT) user.moveLeft = 1;
+	if (key == GLUT_KEY_UP) user.moveUp = 1;
+	if (key == GLUT_KEY_DOWN) user.moveDown = 1;
+}
+
+void smoothNavigate(){
+	float e = .15;
+	if (user.moveRight == 1){
+		user.turn += 5;
+	}
+	if (user.moveLeft == 1){
+		user.turn -= 5;
+	}
+	if (user.moveUp){
+		user.px = user.px + cos(user.turn*3.14/180)*e;
+        user.pz = user.pz + sin(user.turn*3.14/180)*e; 
+	}
+	if (user.moveDown){
+		user.px = user.px - cos(user.turn*3.14/180)*e;
+        user.pz = user.pz - sin(user.turn*3.14/180)*e; 
+	}
+    user.lx = user.px + cos(user.turn*3.14/180);
+    user.lz = user.pz + sin(user.turn*3.14/180);
+}
+
 
 GLuint initShader( GLenum type, const char* source ){
 
@@ -439,29 +503,6 @@ GLuint initShader( GLenum type, const char* source ){
     }   
     return shader;
 }
-
-/*void initTextures() {
-	var texture = gl.createTexture();   // Create a texture object
-
-	while (!document.getElementById("land").complete){};
-	image = document.getElementById("land");
-	image.src = "land.jpg";
-	// Register the event handler to be called when image loading is completed
-	image.onload = function() {
-		// Write the image data to texture object
-		gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, 1);  // Flip the image Y coordinate
-		gl.activeTexture(gl.TEXTURE0);
-		gl.bindTexture(gl.TEXTURE_2D, texture);
-		gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-		gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-
-		// Pass the texure unit 0 to u_Sampler
-		gl.useProgram(program);
-		gl.uniform1i(program.u_Sampler, 0);
-
-		gl.bindTexture(gl.TEXTURE_2D, null);
-	};
-}*/
 
 
 //https://www.opengl.org/archives/resources/code/samples/glut_examples/examples/examples.html
@@ -513,6 +554,21 @@ void initPlane(Primitives &o){
     //Index Buffer
     glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, o.indexBuffer);
     glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0], GL_STATIC_DRAW);
+
+    //Bind Texture
+    glBindTexture(GL_TEXTURE_2D, o.textureID);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    float pixels[] = {
+    	0.0f, 0.0f, 1.0f,   1.0f, 0.0f, 0.0f,
+    	1.0f, 0.0f, 0.0f,   1.0f, 0.0f, 0.0f,
+    };
+    //Target active unit, level, internalformat, width, height, border, format, type, data
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2, 0, GL_RGB, GL_FLOAT, pixels);
 
     //No Buffer Bound
 	glBindBuffer( GL_ARRAY_BUFFER, NULL);
@@ -620,6 +676,9 @@ void render(Primitives &o){
 	//Bind Indices
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, o.indexBuffer);
 
+	//Bind Texture
+	glBindTexture( GL_TEXTURE_2D, o.textureID);
+
 	//Update uniforms in frag vertex  //1 denotes number of matrixes to update
     glUniformMatrix4fv( u.ViewMatrix, 1, GL_TRUE, viewMatrix.elements);
     glUniformMatrix4fv( u.ProjMatrix, 1, GL_TRUE, projMatrix.elements);
@@ -631,10 +690,12 @@ void render(Primitives &o){
    
 }
 
+
 void display(int te){
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glutTimerFunc(1000.0/60.0, display, 1);
+    smoothNavigate(); //Update user movement
 
     u.Tx += 1;
     glUniform4f(u.Translation, u.Tx, u.Ty, u.Tz, 0.0);
@@ -642,10 +703,10 @@ void display(int te){
     //Initialize Matrices
 	projMatrix.setPerspective(90.0, (float)WIDTH/(float)HEIGHT, 0.1, 250.0);
 	//eyeX, eyeY, eyeZ, (at)centerX, (at)centerY, (at)centerZ, upX, upY, upZ
-	viewMatrix.setLookAt(0.0, 0.0, u.Tx*.01,    0.0, 0.0, -1.0,    0.0, 1.0, 0.0);
+	viewMatrix.setLookAt(user.px, user.py, user.pz,    user.lx, user.ly, user.lz,    0.0, 1.0, 0.0);
 
 	//Cube
-	modelMatrix.setTranslate(0,0,-1);
+	modelMatrix.setTranslate(-1,0,-1);
 	modelMatrix.rotate(u.Tx, 0,1,0);
 	render(oneCube);
     
@@ -659,7 +720,6 @@ void display(int te){
 }
 
 
-
 int main(int argc, char** argv)
 {
 
@@ -671,6 +731,9 @@ int main(int argc, char** argv)
     glutInitWindowSize(WIDTH, HEIGHT);
     glutInitWindowPosition(100,100);
     glutCreateWindow("OpenGL - First window demo");
+    glutSpecialFunc(SpecialKeyHandler);
+    glutSpecialUpFunc(SpecialKeyUpHandler);
+    glutKeyboardFunc(NormalKeyHandler);
 
     // Initialize GLEW
     glewExperimental = GL_TRUE; 
@@ -718,6 +781,7 @@ int main(int argc, char** argv)
     //Storage locations for Attributes
     glBindAttribLocation( program, a_Position, "a_Position" );
     glBindAttribLocation( program, a_Color, "a_Color" );
+    glBindAttribLocation( program, a_TexCoord, "a_TexCoord" );
 
     //Buffers (a_ attributes)
     initPlane(onePlane);
@@ -728,4 +792,5 @@ int main(int argc, char** argv)
 
     return 0;
 }
+
 
