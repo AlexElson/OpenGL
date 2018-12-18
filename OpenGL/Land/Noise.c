@@ -15,8 +15,8 @@
 
 using namespace std;
 
-const int WIDTH = 800;
-const int HEIGHT = 600;
+const int WIDTH = 640;
+const int HEIGHT = 480;
 
 static const char* vertex_source = 
     "   #version 130 \n" 
@@ -34,12 +34,14 @@ static const char* vertex_source =
     "   varying vec2 v_TexCoord;\n"
 
     "   void main() { \n" 
+    //"		gl_Position = u_ProjMatrix * u_ViewMatrix * u_ModelMatrix * a_Position; \n"
     "       gl_Position = a_Position * u_ModelMatrix * u_ViewMatrix * u_ProjMatrix;  \n" 
+    //"       gl_Position = a_Position + u_Translation;  \n"
     "       v_Color = a_Color; \n"
     "       v_TexCoord = a_TexCoord;\n"
     "   } \n";
 
-//http://webstaff.itn.liu.se/~stegu/jgt2012/article.pdf
+//http://www.science-and-fiction.org/rendering/noise.html
 
 static const char* fragment_source =
     "   #version 130 \n"
@@ -47,55 +49,39 @@ static const char* fragment_source =
 
     "	uniform sampler2D u_Sampler;\n"
     "	varying vec2 v_TexCoord;\n"
-    "	uniform float u_Time; \n"
 
-    "   vec3 permute(vec3 x){ \n"
-    "		return mod(((x*34.0)+1.0)*x, 289.0); \n"
+    "   float random(in vec2 st){ \n"
+    "		return fract(sin(dot(st.xy, vec2(12.9898, 78.233))) * 43758.5453123); \n"
     "	} \n"
 
-    "	vec3 taylorInvSqrt(vec3 r){ \n"
-    "		return 1.79284291400159 - 0.85373472095314 * r; \n"
-    "	} \n"
 
-    "   float noise(vec2 P){ \n"
-    "		const vec2 C = vec2(0.21132486540518713, 0.36602540378443859); \n"
-    "		vec2 i = floor(P + dot(P, C.yy) ); \n"
-    "		vec2 x0 = P - i + dot(i, C.xx); \n"
-    "		vec2 i1; \n"
-    "		i1.x = step( x0.y, x0.x ); \n"
-    "		i1.y = 1.0 - i1.x; \n"
-    "		vec4 x12 = x0.xyxy +  vec4( C.xx, C.xx * 2.0 - 1.0); \n"
-    "		x12.xy -= i1; \n"
-    "		i = mod(i, 289.0); \n"
-    "		vec3 p = permute( permute( i.y + vec3(0.0, i1.y, 1.0 )) + i.x + vec3(0.0, i1.x, 1.0 )); \n"
-    "		vec3 m = max(0.5 - vec3(dot(x0,x0), dot(x12.xy, x12.xy), dot(x12.zw, x12.zw)), 0.0); \n"
-    "		m = m*m; \n"
-    "		m = m*m; \n"
-    "		vec3 x = fract(p*(1.0/41.0)) * 2.0 - 1.0; \n"
-    "		vec3 gy = abs(x)-0.5; \n"
-    "		vec3 ox = floor(x + 0.5); \n"
-    "		vec3 gx = x - ox; \n"
-    "		m *= taylorInvSqrt( gx*gx + gy*gy ); \n"
-    "		vec3 g; \n"
-    "		g.x = gx.x * x0.x + gy.x * x0.y; \n"
-    "		g.yz = gx.yz * x12.xz + gy.yz * x12.yw; \n"
-    "		return 130.0 * dot(m, g); \n"
-    "	} \n"
-
-    "	float turb(float cx, float cy){ \n"
-    "		return .5 * noise(vec2(cx,cy)) + .25 * noise(vec2(2*cx,2*cy)) + 1/8 * noise(vec2(4*cx,4*cy)); \n"
+    "   float noise(in vec2 st){ \n"
+    "		vec2 i = floor(st); \n"
+    "		vec2 f = fract(st); \n"
+    // Four corners in 2D of a tile
+    "		float a = random(i); \n"
+    "		float b = random(i + vec2(1.0, 0.0)); \n"
+    "		float c = random(i + vec2(0.0, 1.0)); \n"
+    "		float d = random(i + vec2(1.0, 1.0)); \n"
+    // Smooth Interpolation
+    // Cubic Hermine Curve.  Same as SmoothStep()
+    "		vec2 u = f*f*f*(f*(f*6.-15.)+10.); \n"
+    // u = smoothstep(0.,1.,f);
+    // Mix 4 coorners percentages
+    "		return mix(a, b, u.x) + \n"
+    "       	 (c - a)* u.y * (1.0 - u.x) + \n"
+    "       	 (d - b) * u.x * u.y; \n"
     "	} \n"
 
     "   void main(){ \n" 
-    "		float cx = v_TexCoord.x; \n"
-    "		float cy = v_TexCoord.y; \n"
-    "		float n = (1 + sin((cx + noise( vec2(cx*5 ,cy*5) ) * .5) * 50)) * .5; \n"
-    "		float m = (1 + sin((cx*cy*.1 + sin(u_Time*.01) * turb(cx*5,cy*5) *.1) * 50))/2; \n"
-
     "       vec4 color = texture2D(u_Sampler, v_TexCoord); \n"
-    "       gl_FragColor = v_Color * vec4(color.rgb, color.a); \n"
+    //"       gl_FragColor = v_Color * vec4(color.rgb, color.a); \n"
     //"       gl_FragColor = vec4(color.rgb, color.a); \n"
-    //"       gl_FragColor = vec4( m,m,m, 1.0); \n"
+    "		float coordx = v_TexCoord.x; \n"
+    "		float coordy = v_TexCoord.y; \n"
+    "		float n = noise( vec2(coordx*5 ,coordy*5) ); \n"
+    //"		vec2 st = gl_FragCoord.xy/u.resolution.xy;"
+    "       gl_FragColor = vec4( vec3(n) ,1.0); \n"
     "   }\n";
 
 typedef enum {
@@ -437,10 +423,6 @@ struct Matrix4 {
 
 };
 
-/////////////////////Simplex Noise
-
-///////////////////////Structs
-
 GLuint vao;
 
 struct uniformStruct {
@@ -449,7 +431,6 @@ struct uniformStruct {
     GLuint ProjMatrix;
     GLuint ModelMatrix;
     GLuint Sampler;
-    GLfloat Time;
     float Tx = 0.0;
     float Ty = 0.0;
     float Tz = 0.0;
@@ -467,7 +448,6 @@ struct Primitives {
 
 Primitives oneCube;
 Primitives onePlane;
-Primitives oneLand;
 
 struct moveMent {
 	float px = 0; //Player Position
@@ -558,126 +538,8 @@ GLuint initShader( GLenum type, const char* source ){
 
 //https://www.opengl.org/archives/resources/code/samples/glut_examples/examples/examples.html
 
-void initLand(Primitives &o, const char* file){
-	// Create a Plane
-	//  v1------v0----
-	//  |       | 
-	//  |       |
-	//  |       |
-	//  v2------v3---- 
-	//  |       |
-	//  |       |
-
-	vector<float> v;
-	vector<float> cs;
-	vector<float> t;
-	vector<unsigned int> i;
-	int c = 0; //count
-	int tex = 1;
-	float s = .1; //size
-	float f = s *.5; //offset
-
-  	for (int y = 0; y < 128; y++){
-		for (int x = 0; x < 128; x++){
-
-			float h = sin(y*.1);
-			
-			v.insert(v.end(), {
-				f+x*s, h, f+y*s,   
-				-f+x*s, h, f+y*s,    
-				-f+x*s, h, -f+y*s,   
-				f+x*s, h, -f+y*s} );
-			t.insert(t.end(), {tex, tex,    0.0, tex,     0.0, 0.0,   tex, 0.0} );
-			i.insert(i.end(), {0+c*4, 1+c*4, 2+c*4,    0+c*4, 2+c*4, 3+c*4} );
-			float g = sin(y*.1);
-			cs.insert(cs.end(), {0, g, 0, 1,
-        						 0, g, 0, 1, 
-        						 0, g, 0, 1,
-    							 0, g, 0, 1, 
-								 0, g, 0, 1, 
-        						 0, g, 0, 1 } );
-			c += 1;
-		}
-	}
-
-	GLfloat vertices[ v.size() ];
-	copy(v.begin(), v.end(), vertices);
-
-	GLfloat colors[ cs.size() ];
-	copy(cs.begin(), cs.end(), colors);
-
-	GLfloat texCoords[ t.size() ];
-	copy(t.begin(), t.end(), texCoords);
-
-	GLuint indices[ i.size() ];
-	copy(i.begin(), i.end(), indices);
-
-    o.numIndices = sizeof(indices) / 4;
-
-    // Create buffer objects
-	glGenBuffers( 1, &o.vertexBuffer);
-	glGenBuffers( 1, &o.colorBuffer );
-	glGenBuffers( 1, &o.indexBuffer );
-	glGenBuffers( 1, &o.texCoordBuffer );
-	glGenTextures( 1, &o.textureID );
-
-    //Position
-    glBindBuffer( GL_ARRAY_BUFFER, o.vertexBuffer);
-    glBufferData( GL_ARRAY_BUFFER, sizeof(vertices), &vertices[0], GL_STATIC_DRAW);
-    glVertexAttribPointer(a_Position, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(a_Position);
-
-    //Color
-    glBindBuffer( GL_ARRAY_BUFFER, o.colorBuffer);
-    glBufferData( GL_ARRAY_BUFFER, sizeof(colors), &colors[0], GL_STATIC_DRAW);
-    glVertexAttribPointer(a_Color, 4, GL_FLOAT, GL_FALSE, 0, 0 );
-    glEnableVertexAttribArray(a_Color);
-
-    //Index Buffer
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, o.indexBuffer);
-    glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0], GL_STATIC_DRAW);
-
-	//Texture Coordinates
-    glBindBuffer( GL_ARRAY_BUFFER, o.texCoordBuffer);
-    glBufferData( GL_ARRAY_BUFFER, sizeof(texCoords), &texCoords[0], GL_STATIC_DRAW);
-    glVertexAttribPointer(a_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(a_TexCoord);
-
-    //Bind Texture
-    glEnable(GL_TEXTURE_2D);
-    glActiveTexture( GL_TEXTURE0);
-    glBindTexture(   GL_TEXTURE_2D, o.textureID);
-
-    if (file != "None"){
-	    int w, h;
-	    unsigned char* image = SOIL_load_image(file, &w, &h, 0, SOIL_LOAD_RGB);
-	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w,h,
-	    	0, GL_RGB, GL_UNSIGNED_BYTE, image);
-        SOIL_free_image_data(image);
-	}else{	
-   		float pixels[] = {
-    		.9f, .8f, .58f,   .66f, .54f, .33f,
-    		.66f, .54f, .33f,   .9f, .8f, .58f,
-		};
-	    //Target active unit, level, internalformat, width, height, border, format, type, data
-	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2,
-	    	0, GL_RGB, GL_FLOAT, pixels);
-    }
-
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    //No Buffer Bound
-	glBindBuffer( GL_ARRAY_BUFFER, NULL);
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, NULL);
-}
-
-
-void initPlane(Primitives &o, const char* file){
-	// Create a Plane
+void initPlane(Primitives &o){
+	// Create a cube
 	//  v1------v0
 	//  |       | 
 	//  |       |
@@ -700,9 +562,9 @@ void initPlane(Primitives &o, const char* file){
         1, 1, 1, 1,
     };
 
-    float n = 5;
+    float n = 3;
     const GLfloat texCoords[] = {
-		0.0, 0.0,   n,0.0,   n,n,   0.0, n  // v0-v5-v6-v1 up
+		n,   0.0,   n,n,        0.0, n,     0.0, 0.0,    // v0-v5-v6-v1 up
     };
 
     const GLuint indices[] = {
@@ -741,25 +603,19 @@ void initPlane(Primitives &o, const char* file){
     glEnableVertexAttribArray(a_TexCoord);
 
     //Bind Texture
-    glEnable(GL_TEXTURE_2D);
     glActiveTexture( GL_TEXTURE0);
     glBindTexture(   GL_TEXTURE_2D, o.textureID);
 
-    if (file != "None"){
-	    int w, h;
-	    unsigned char* image = SOIL_load_image(file, &w, &h, 0, SOIL_LOAD_RGB);
-	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w,h,
-	    	0, GL_RGB, GL_UNSIGNED_BYTE, image);
-        SOIL_free_image_data(image);
-	}else{	
-   		float pixels[] = {
-    		.9f, .8f, .58f,   .66f, .54f, .33f,
-    		.66f, .54f, .33f,   .9f, .8f, .58f,
-		};
-	    //Target active unit, level, internalformat, width, height, border, format, type, data
-	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2,
-	    	0, GL_RGB, GL_FLOAT, pixels);
-    }
+    int w, h;
+    unsigned char* image = SOIL_load_image("../old_trinity.png", &w, &h, 0, SOIL_LOAD_RGB);
+
+    float pixels[] = {
+    	1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 0.0f,
+    	0.0f, 0.0f, 0.0f,   1.0f, 1.0f, 1.0f,
+    };
+    //Target active unit, level, internalformat, width, height, border, format, type, data
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 64, 64,
+    	0, GL_RGB, GL_FLOAT, image);
 
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
@@ -772,7 +628,7 @@ void initPlane(Primitives &o, const char* file){
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, NULL);
 }
 
-void initCube(Primitives &o, const char* file) {
+void initCube(Primitives &o) {
 	// Create a cube
 	//    v6----- v5
 	//   /|      /|
@@ -852,21 +708,16 @@ void initCube(Primitives &o, const char* file) {
     glActiveTexture( GL_TEXTURE0);
     glBindTexture(   GL_TEXTURE_2D, o.textureID);
 
-    if (file != "None"){
-	    int w, h;
-	    unsigned char* image = SOIL_load_image(file, &w, &h, 0, SOIL_LOAD_RGB);
-	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w,h,
-	    	0, GL_RGB, GL_UNSIGNED_BYTE, image);
-	    SOIL_free_image_data(image);
-	}else{
-	    float pixels[] = {
-	    	1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 0.0f,
-	    	0.0f, 0.0f, 0.0f,   1.0f, 1.0f, 1.0f,
-	    };
-	    //Target active unit, level, internalformat, width, height, border, format, type, data
-	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2,
-	    	0, GL_RGB, GL_FLOAT, pixels);
-    }
+    int w, h;
+    unsigned char* image = SOIL_load_image("../old_trinity.png", &w, &h, 0, SOIL_LOAD_RGB);
+
+    float pixels[] = {
+    	1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 0.0f,
+    	0.0f, 0.0f, 0.0f,   1.0f, 1.0f, 1.0f,
+    };
+    //Target active unit, level, internalformat, width, height, border, format, type, data
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2,
+    	0, GL_RGB, GL_FLOAT, pixels);
 
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
@@ -922,7 +773,7 @@ void render(Primitives &o){
     glUniform1i( u.Sampler, 0);
 
     //DrawElements allows to display Cube, etc, with fewer indices
-    glDrawElements( GL_TRIANGLES, o.numIndices, GL_UNSIGNED_INT, 0);
+    glDrawElements( GL_TRIANGLE_STRIP, o.numIndices, GL_UNSIGNED_INT, 0);
 
    
 }
@@ -942,22 +793,15 @@ void display(int te){
 	//eyeX, eyeY, eyeZ, (at)centerX, (at)centerY, (at)centerZ, upX, upY, upZ
 	viewMatrix.setLookAt(user.px, user.py, user.pz,    user.lx, user.ly, user.lz,    0.0, 1.0, 0.0);
 
-	//Update Time
-	glUniform1f( u.Time, u.Tx);
-
 	//Cube
 	modelMatrix.setTranslate(-1,0,-1);
-	modelMatrix.rotate(u.Tx, 1*sin(u.Tx*.01),1,0);
+	modelMatrix.rotate(u.Tx, 0,1,0);
 	render(oneCube);
     
     //Plane
 	modelMatrix.setTranslate(1,0,-1);
+	//modelMatrix.rotate(u.Tx*.9, 1,1,1);
 	render(onePlane);
-
-	//Land
-	modelMatrix.setTranslate(0,-1,0);
-	modelMatrix.rotate(0,  1,0,0);
-	render(oneLand);
    
     glutSwapBuffers();
 
@@ -1022,7 +866,6 @@ int main(int argc, char** argv)
 	u.ViewMatrix = glGetUniformLocation( program, "u_ViewMatrix");
 	u.ModelMatrix = glGetUniformLocation( program, "u_ModelMatrix");
 	u.Sampler = glGetUniformLocation( program, "u_Sampler");
-	u.Time = glGetUniformLocation( program, "u_Time");
 
     //Storage locations for Attributes
     glBindAttribLocation( program, a_Position, "a_Position" );
@@ -1030,9 +873,8 @@ int main(int argc, char** argv)
     glBindAttribLocation( program, a_TexCoord, "a_TexCoord" );
 
     //Buffers (a_ attributes)
-    initPlane(onePlane, "None");
-    initLand(oneLand, "None");
-    initCube(oneCube, "../old_trinity.png");
+    initPlane(onePlane);
+    initCube(oneCube);
 
     glutTimerFunc(1000.0/60.0, display, 1);
     glutMainLoop();

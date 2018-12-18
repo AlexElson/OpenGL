@@ -93,8 +93,9 @@ static const char* fragment_source =
     "		float m = (1 + sin((cx*cy*.1 + sin(u_Time*.01) * turb(cx*5,cy*5) *.1) * 50))/2; \n"
 
     "       vec4 color = texture2D(u_Sampler, v_TexCoord); \n"
-    "       gl_FragColor = v_Color * vec4(color.rgb, color.a); \n"
-    //"       gl_FragColor = vec4(color.rgb, color.a); \n"
+    //"       gl_FragColor = v_Color * vec4(color.rgb, color.a); \n"
+    "       gl_FragColor = vec4(color.rgb, color.a); \n"
+
     //"       gl_FragColor = vec4( m,m,m, 1.0); \n"
     "   }\n";
 
@@ -437,10 +438,6 @@ struct Matrix4 {
 
 };
 
-/////////////////////Simplex Noise
-
-///////////////////////Structs
-
 GLuint vao;
 
 struct uniformStruct {
@@ -467,7 +464,6 @@ struct Primitives {
 
 Primitives oneCube;
 Primitives onePlane;
-Primitives oneLand;
 
 struct moveMent {
 	float px = 0; //Player Position
@@ -558,126 +554,8 @@ GLuint initShader( GLenum type, const char* source ){
 
 //https://www.opengl.org/archives/resources/code/samples/glut_examples/examples/examples.html
 
-void initLand(Primitives &o, const char* file){
-	// Create a Plane
-	//  v1------v0----
-	//  |       | 
-	//  |       |
-	//  |       |
-	//  v2------v3---- 
-	//  |       |
-	//  |       |
-
-	vector<float> v;
-	vector<float> cs;
-	vector<float> t;
-	vector<unsigned int> i;
-	int c = 0; //count
-	int tex = 1;
-	float s = .1; //size
-	float f = s *.5; //offset
-
-  	for (int y = 0; y < 128; y++){
-		for (int x = 0; x < 128; x++){
-
-			float h = sin(y*.1);
-			
-			v.insert(v.end(), {
-				f+x*s, h, f+y*s,   
-				-f+x*s, h, f+y*s,    
-				-f+x*s, h, -f+y*s,   
-				f+x*s, h, -f+y*s} );
-			t.insert(t.end(), {tex, tex,    0.0, tex,     0.0, 0.0,   tex, 0.0} );
-			i.insert(i.end(), {0+c*4, 1+c*4, 2+c*4,    0+c*4, 2+c*4, 3+c*4} );
-			float g = sin(y*.1);
-			cs.insert(cs.end(), {0, g, 0, 1,
-        						 0, g, 0, 1, 
-        						 0, g, 0, 1,
-    							 0, g, 0, 1, 
-								 0, g, 0, 1, 
-        						 0, g, 0, 1 } );
-			c += 1;
-		}
-	}
-
-	GLfloat vertices[ v.size() ];
-	copy(v.begin(), v.end(), vertices);
-
-	GLfloat colors[ cs.size() ];
-	copy(cs.begin(), cs.end(), colors);
-
-	GLfloat texCoords[ t.size() ];
-	copy(t.begin(), t.end(), texCoords);
-
-	GLuint indices[ i.size() ];
-	copy(i.begin(), i.end(), indices);
-
-    o.numIndices = sizeof(indices) / 4;
-
-    // Create buffer objects
-	glGenBuffers( 1, &o.vertexBuffer);
-	glGenBuffers( 1, &o.colorBuffer );
-	glGenBuffers( 1, &o.indexBuffer );
-	glGenBuffers( 1, &o.texCoordBuffer );
-	glGenTextures( 1, &o.textureID );
-
-    //Position
-    glBindBuffer( GL_ARRAY_BUFFER, o.vertexBuffer);
-    glBufferData( GL_ARRAY_BUFFER, sizeof(vertices), &vertices[0], GL_STATIC_DRAW);
-    glVertexAttribPointer(a_Position, 3, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(a_Position);
-
-    //Color
-    glBindBuffer( GL_ARRAY_BUFFER, o.colorBuffer);
-    glBufferData( GL_ARRAY_BUFFER, sizeof(colors), &colors[0], GL_STATIC_DRAW);
-    glVertexAttribPointer(a_Color, 4, GL_FLOAT, GL_FALSE, 0, 0 );
-    glEnableVertexAttribArray(a_Color);
-
-    //Index Buffer
-    glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, o.indexBuffer);
-    glBufferData( GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), &indices[0], GL_STATIC_DRAW);
-
-	//Texture Coordinates
-    glBindBuffer( GL_ARRAY_BUFFER, o.texCoordBuffer);
-    glBufferData( GL_ARRAY_BUFFER, sizeof(texCoords), &texCoords[0], GL_STATIC_DRAW);
-    glVertexAttribPointer(a_TexCoord, 2, GL_FLOAT, GL_FALSE, 0, 0);
-    glEnableVertexAttribArray(a_TexCoord);
-
-    //Bind Texture
-    glEnable(GL_TEXTURE_2D);
-    glActiveTexture( GL_TEXTURE0);
-    glBindTexture(   GL_TEXTURE_2D, o.textureID);
-
-    if (file != "None"){
-	    int w, h;
-	    unsigned char* image = SOIL_load_image(file, &w, &h, 0, SOIL_LOAD_RGB);
-	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w,h,
-	    	0, GL_RGB, GL_UNSIGNED_BYTE, image);
-        SOIL_free_image_data(image);
-	}else{	
-   		float pixels[] = {
-    		.9f, .8f, .58f,   .66f, .54f, .33f,
-    		.66f, .54f, .33f,   .9f, .8f, .58f,
-		};
-	    //Target active unit, level, internalformat, width, height, border, format, type, data
-	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2,
-	    	0, GL_RGB, GL_FLOAT, pixels);
-    }
-
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    //No Buffer Bound
-	glBindBuffer( GL_ARRAY_BUFFER, NULL);
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, NULL);
-}
-
-
-void initPlane(Primitives &o, const char* file){
-	// Create a Plane
+void initPlane(Primitives &o){
+	// Create a cube
 	//  v1------v0
 	//  |       | 
 	//  |       |
@@ -700,7 +578,7 @@ void initPlane(Primitives &o, const char* file){
         1, 1, 1, 1,
     };
 
-    float n = 5;
+    float n = 1;
     const GLfloat texCoords[] = {
 		0.0, 0.0,   n,0.0,   n,n,   0.0, n  // v0-v5-v6-v1 up
     };
@@ -745,34 +623,31 @@ void initPlane(Primitives &o, const char* file){
     glActiveTexture( GL_TEXTURE0);
     glBindTexture(   GL_TEXTURE_2D, o.textureID);
 
-    if (file != "None"){
-	    int w, h;
-	    unsigned char* image = SOIL_load_image(file, &w, &h, 0, SOIL_LOAD_RGB);
-	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w,h,
-	    	0, GL_RGB, GL_UNSIGNED_BYTE, image);
-        SOIL_free_image_data(image);
-	}else{	
-   		float pixels[] = {
-    		.9f, .8f, .58f,   .66f, .54f, .33f,
-    		.66f, .54f, .33f,   .9f, .8f, .58f,
-		};
-	    //Target active unit, level, internalformat, width, height, border, format, type, data
-	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2,
-	    	0, GL_RGB, GL_FLOAT, pixels);
-    }
+    int w, h;
+    unsigned char* image = SOIL_load_image("../shia.png", &w, &h, 0, SOIL_LOAD_RGB);
+    cout << w << " " << h << endl;
+
+    float pixels[] = {
+    	1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 0.0f,
+    	0.0f, 0.0f, 0.0f,   1.0f, 1.0f, 1.0f,
+    };
+    //Target active unit, level, internalformat, width, height, border, format, type, data
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1024, 1024,
+    	0, GL_RGB, GL_UNSIGNED_BYTE, image);
 
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
     glGenerateMipmap(GL_TEXTURE_2D);
+    SOIL_free_image_data(image);
 
     //No Buffer Bound
 	glBindBuffer( GL_ARRAY_BUFFER, NULL);
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, NULL);
 }
 
-void initCube(Primitives &o, const char* file) {
+void initCube(Primitives &o) {
 	// Create a cube
 	//    v6----- v5
 	//   /|      /|
@@ -852,21 +727,16 @@ void initCube(Primitives &o, const char* file) {
     glActiveTexture( GL_TEXTURE0);
     glBindTexture(   GL_TEXTURE_2D, o.textureID);
 
-    if (file != "None"){
-	    int w, h;
-	    unsigned char* image = SOIL_load_image(file, &w, &h, 0, SOIL_LOAD_RGB);
-	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, w,h,
-	    	0, GL_RGB, GL_UNSIGNED_BYTE, image);
-	    SOIL_free_image_data(image);
-	}else{
-	    float pixels[] = {
-	    	1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 0.0f,
-	    	0.0f, 0.0f, 0.0f,   1.0f, 1.0f, 1.0f,
-	    };
-	    //Target active unit, level, internalformat, width, height, border, format, type, data
-	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2,
-	    	0, GL_RGB, GL_FLOAT, pixels);
-    }
+    int w, h;
+    unsigned char* image = SOIL_load_image("../old_trinity.png", &w, &h, 0, SOIL_LOAD_RGB);
+
+    float pixels[] = {
+    	1.0f, 1.0f, 1.0f,   0.0f, 0.0f, 0.0f,
+    	0.0f, 0.0f, 0.0f,   1.0f, 1.0f, 1.0f,
+    };
+    //Target active unit, level, internalformat, width, height, border, format, type, data
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2,
+    	0, GL_RGB, GL_FLOAT, pixels);
 
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
     glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
@@ -947,17 +817,14 @@ void display(int te){
 
 	//Cube
 	modelMatrix.setTranslate(-1,0,-1);
-	modelMatrix.rotate(u.Tx, 1*sin(u.Tx*.01),1,0);
+	//modelMatrix.rotate(u.Tx, 1*sin(u.Tx*.01),1,0);
+	modelMatrix.rotate(-90+sin(u.Tx*.1)*10, 1,0,0);
 	render(oneCube);
     
     //Plane
 	modelMatrix.setTranslate(1,0,-1);
+	//modelMatrix.rotate(u.Tx*.9, 1,1,1);
 	render(onePlane);
-
-	//Land
-	modelMatrix.setTranslate(0,-1,0);
-	modelMatrix.rotate(0,  1,0,0);
-	render(oneLand);
    
     glutSwapBuffers();
 
@@ -1030,9 +897,8 @@ int main(int argc, char** argv)
     glBindAttribLocation( program, a_TexCoord, "a_TexCoord" );
 
     //Buffers (a_ attributes)
-    initPlane(onePlane, "None");
-    initLand(oneLand, "None");
-    initCube(oneCube, "../old_trinity.png");
+    initPlane(onePlane);
+    initCube(oneCube);
 
     glutTimerFunc(1000.0/60.0, display, 1);
     glutMainLoop();
