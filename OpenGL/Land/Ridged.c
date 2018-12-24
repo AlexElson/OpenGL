@@ -6,7 +6,6 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 #include "../SOIL.h"
-#include <time.h>
 
 #include <stdio.h>
 #include <vector>
@@ -87,17 +86,16 @@ static const char* fragment_source =
     "		return .5 * noise(vec2(cx,cy)) + .25 * noise(vec2(2*cx,2*cy)) + .125 * noise(vec2(4*cx,4*cy)); \n"
     "	} \n"
 
-    "   void main(){ \n"
+    "   void main(){ \n" 
     "		float cx = v_TexCoord.x; \n"
     "		float cy = v_TexCoord.y; \n"
-    "		float n = (1 + sin((cx+cy + noise( vec2(cx/4 ,cy/16) ) * .5) * 50)) * .5; \n"
-    //"		float m = (1 + sin((cx+cy + sin(u_Time*.01) * turb(cx*10,cy*5) *.1) * 50))/2; \n"
-    "		float m = (1 + sin((cx + turb(cx,cy) * .1) * 25)) * .5; \n"
+    "		float n = (1 + sin((cx + noise( vec2(cx*5 ,cy*5) ) * .5) * 50)) * .5; \n"
+    "		float m = (1 + sin((cx*cy*.1 + sin(u_Time*.01) * turb(cx*5,cy*5) *.1) * 50))/2; \n"
 
     "       vec4 color = texture2D(u_Sampler, v_TexCoord); \n"
     "       gl_FragColor = v_Color * vec4(color.rgb, color.a); \n"
     //"       gl_FragColor = vec4(color.rgb, color.a); \n"
-    //"       gl_FragColor = gl_FragColor + vec4( m,m,m, 1.0); \n"
+    //"       gl_FragColor = vec4( m,m,m, 1.0); \n"
     "   }\n";
 
 typedef enum {
@@ -440,8 +438,7 @@ struct Matrix4 {
 };
 
 /////////////////////Simplex Noise
-
-static int SEED;
+static int SEED = rand() % 999;
 
 static int hash_noise[] = {208,34,231,213,32,248,233,56,161,78,24,140,71,48,140,254,245,255,247,247,40,
                      185,248,251,245,28,124,204,204,76,36,1,107,28,234,163,202,224,245,128,167,204,
@@ -552,14 +549,14 @@ struct Primitives {
 
 Primitives oneCube;
 Primitives onePlane;
-Primitives oneLand, twoLand, threeLand, fourLand;
+Primitives oneLand;
 
 struct moveMent {
 	float px = 0; //Player Position
 	float py = 0;
 	float pz = 1;
 	float lx = 0; //Look
-	float ly = -.25;
+	float ly = -.5;
 	float lz = 0;
 	float turn = -90;
 	int moveUp = 0;
@@ -571,18 +568,8 @@ struct moveMent {
 void NormalKeyHandler(unsigned char key, int x, int y){
 	if (key == 32){ //Space
 		cout << "Jump" << endl;
-		user.py = user.py + 5;
-		user.ly = user.ly + 5;
-	}
-	if (key == 120){
-		user.py = user.py -4;
-		user.ly = user.ly -4;	
-	}
-	if (key == 122){
-		exit(0);
 	}
 }
-
 void SpecialKeyUpHandler(int key, int x, int y){
 	if (key == GLUT_KEY_RIGHT) user.moveRight = 0;
 	if (key == GLUT_KEY_LEFT) user.moveLeft = 0;
@@ -597,7 +584,7 @@ void SpecialKeyHandler(int key, int x, int y){
 }
 
 void smoothNavigate(){
-	float e = .45;
+	float e = .15;
 	if (user.moveRight == 1){
 		user.turn += 5;
 	}
@@ -653,11 +640,7 @@ GLuint initShader( GLenum type, const char* source ){
 
 //https://www.opengl.org/archives/resources/code/samples/glut_examples/examples/examples.html
 
-float red;
-float gre;
-float blu;
-
-void initLand(Primitives &o, const char* file, int chunk_x, int chunk_y){
+void initLand(Primitives &o, const char* file){
 	// Create a Plane
 	//  v1------v0----
 	//  |       | 
@@ -677,60 +660,29 @@ void initLand(Primitives &o, const char* file, int chunk_x, int chunk_y){
 	float f = s *.5; //offset
 	float old_h = 0;
 
-	int ls = 216; //land size
-	float cx = (chunk_x) * ls;
-	float cy = (chunk_y) * ls;
-
-	cout << cx << " " << cy << endl;
-
-  	for (int y = 0; y < ls; y++){
-		for (int x = 0; x < ls; x++){
+  	for (int y = 0; y < 200; y++){
+		for (int x = 0; x < 200; x++){
 
 			float h[] = {0,0,0,0};
-			float H[] = {0,0,0,0};
 			//Generate individual height of plane corners that make up land
 			for (int it = 0; it < 4; it++){
 				int iy = it % 2;
 				int ix = floor(it/2);
-				float z = sqrt( (x+ix+cx-ls)*(x+ix+cx-ls)+(y+iy+cy-ls)*(y+iy+cy-ls)) / (128.0) * 2.5;
-				if (z > 4){ z = 4; }
-				//Fine Ridges
-				h[it] = ridgenoise( (y+iy+cy)*.025, (x+ix+cx)*.025,  1, 1);
-				if (h[it] >= .9) h[it] = h[it] = .9;
-				//Rolling Mountains (height of ridges across an area)
-				H[it] = perlin2d( (y+iy+cy)*.015, (x+ix+cx)*.015, .5, 1)+1;
-				h[it] = pow(h[it], 2);
-				H[it] = pow(H[it], z*2);
-				
+				h[it] = ridgenoise( (y+iy)*.1, (x+ix)*.1,  .5, 1);
 			}
+
 			v.insert(v.end(), {
-				f+x*s, h[3]*H[3], f+y*s,
-			   -f+x*s, h[1]*H[1], f+y*s,
-			   -f+x*s, h[0]*H[0], -f+y*s,
-				f+x*s, h[2]*H[2], -f+y*s} );
-			t.insert(t.end(), {tex+x, tex+y,    0.0+x, tex+y,     0.0+x, 0.0+y,   tex+x, 0.0+y} );
+				f+x*s, h[3], f+y*s,   
+				-f+x*s, h[1], f+y*s,    
+				-f+x*s, h[0], -f+y*s,   
+				f+x*s, h[2], -f+y*s} );
+			t.insert(t.end(), {tex, tex,    0.0, tex,     0.0, 0.0,   tex, 0.0} );
 			i.insert(i.end(), {0+c*4, 1+c*4, 2+c*4,    0+c*4, 2+c*4, 3+c*4} );
-			
-			float g[] = {0,0,0,0}; //Sharpness of colors on ends of mountains
-			for(int it = 0; it < 4; it++)
-				g[it] = pow(h[it],1); //*.5+.25
-			
-			/*float red = 255.0/255.0;
-			float gre = 258/255.0;
-			float blu = 100/255.0;
-			float q = .7;
-			float w = 1;
-			float j = 1; */
-			srand(SEED);
-			float q = rand()%100; q/=100; q+=.5;
-			float w = rand()%100; w/=100; w+=.5;
-			float j = rand()%100; j/=100; j+=.5;
-			//cout << "r:" << red << " g:" << gre << " b:" << blu << endl;
-			cs.insert(cs.end(), {red-g[3]*q, gre-g[3]*w, blu-g[3]*j, 1,
-        						 red-g[1]*q, gre-g[1]*w, blu-g[1]*j, 1, 
-        						 red-g[0]*q, gre-g[0]*w, blu-g[0]*j, 1,
-    							 red-g[2]*q, gre-g[2]*w, blu-g[2]*j, 1 } ); 
-			/*cs.insert(cs.end(), {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 } );*/
+			float g = h[0];
+			cs.insert(cs.end(), {0, g, 1-g, 1,
+        						 0, g, 1-g, 1, 
+        						 0, g, 1-g, 1,
+    							 0, g, 1-g, 1 } );
 			c += 1;
 		}
 	}
@@ -791,8 +743,8 @@ void initLand(Primitives &o, const char* file, int chunk_x, int chunk_y){
         SOIL_free_image_data(image);
 	}else{	
    		float pixels[] = {
-    		.9f, .8f, .58f,   .8f, .7f, .6f,
-    		.75f, .7f, .5f,   .86f, .77f, .62f,
+    		.9f, .8f, .58f,   .66f, .54f, .33f,
+    		.66f, .54f, .33f,   .9f, .8f, .58f,
 		};
 	    //Target active unit, level, internalformat, width, height, border, format, type, data
 	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2,
@@ -889,7 +841,7 @@ void initPlane(Primitives &o, const char* file){
 	}else{	
    		float pixels[] = {
     		.9f, .8f, .58f,   .66f, .54f, .33f,
-    		.66f, .54f, .33f,   .9f, .8f, .58f
+    		.66f, .54f, .33f,   .9f, .8f, .58f,
 		};
 	    //Target active unit, level, internalformat, width, height, border, format, type, data
 	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2,
@@ -1073,7 +1025,7 @@ void display(int te){
     glUniform4f(u.Translation, u.Tx, u.Ty, u.Tz, 0.0);
 
     //Initialize Matrices
-	projMatrix.setPerspective(90.0, (float)WIDTH/(float)HEIGHT, 0.1, 950.0);
+	projMatrix.setPerspective(90.0, (float)WIDTH/(float)HEIGHT, 0.1, 250.0);
 	//eyeX, eyeY, eyeZ, (at)centerX, (at)centerY, (at)centerZ, upX, upY, upZ
 	viewMatrix.setLookAt(user.px, user.py, user.pz,    user.lx, user.ly, user.lz,    0.0, 1.0, 0.0);
 
@@ -1090,35 +1042,17 @@ void display(int te){
 	render(onePlane);
 
 	//Land
-	int rrr = SEED % 2;
-	if (rrr == 0) rrr = 2;
-	modelMatrix.setScale(32,rrr,32);
-	modelMatrix.translate(0,-8,0);
+	modelMatrix.setTranslate(0,-2,0);
+	modelMatrix.rotate(0,  1,0,0);
 	render(oneLand);
-
-	modelMatrix.setScale(32,rrr,32);
-	modelMatrix.translate(0,-8,-216*.1);
-	render(twoLand);
-
-	modelMatrix.setScale(32,rrr,32);
-	modelMatrix.translate(-216*.1,-8,-216*.1);
-	render(threeLand);
-
-	modelMatrix.setScale(32,rrr,32);
-	modelMatrix.translate(-216*.1,-8,0);
-	render(fourLand);
    
     glutSwapBuffers();
+
 }
-
-
 
 
 int main(int argc, char** argv)
 {
-
-	srand(time(0));
-	SEED = rand() % 999;
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB | GLUT_DEPTH);
@@ -1161,13 +1095,7 @@ int main(int argc, char** argv)
 
 	glEnable( GL_DEPTH_TEST );
     glDepthFunc( GL_LESS );
-
-			red = rand() % 255; red/=155;
-			gre = rand() % 255; gre/=155;
-			blu = rand() % 255; blu/=155;
-			glClearColor(red,gre,blu,1.0);
-
-    //glClearColor( 80.0/255.0, 170/255.0, 220.0/255.0, 1.0 );
+    glClearColor( 0.0, 0.0, 0.5, 1.0 );
     glViewport( 0, 0, WIDTH, HEIGHT );
 
     //VAO?
@@ -1190,10 +1118,7 @@ int main(int argc, char** argv)
 
     //Buffers (a_ attributes)
     initPlane(onePlane, "None");
-    initLand(oneLand, "None", 1, 1);
-    initLand(twoLand, "None", 1, 0);
-    initLand(threeLand, "None", 0, 0);
-    initLand(fourLand, "None", 0, 1);
+    initLand(oneLand, "None");
     initCube(oneCube, "../old_trinity.png");
 
     glutTimerFunc(1000.0/60.0, display, 1);

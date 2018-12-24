@@ -575,11 +575,8 @@ void NormalKeyHandler(unsigned char key, int x, int y){
 		user.ly = user.ly + 5;
 	}
 	if (key == 120){
-		user.py = user.py -4;
-		user.ly = user.ly -4;	
-	}
-	if (key == 122){
 		exit(0);
+		
 	}
 }
 
@@ -653,10 +650,6 @@ GLuint initShader( GLenum type, const char* source ){
 
 //https://www.opengl.org/archives/resources/code/samples/glut_examples/examples/examples.html
 
-float red;
-float gre;
-float blu;
-
 void initLand(Primitives &o, const char* file, int chunk_x, int chunk_y){
 	// Create a Plane
 	//  v1------v0----
@@ -715,21 +708,16 @@ void initLand(Primitives &o, const char* file, int chunk_x, int chunk_y){
 			for(int it = 0; it < 4; it++)
 				g[it] = pow(h[it],1); //*.5+.25
 			
-			/*float red = 255.0/255.0;
-			float gre = 258/255.0;
-			float blu = 100/255.0;
-			float q = .7;
+			float red = 0.0/255.0;
+			float gre = 255.0/255.0;
+			float blu = 255.0/255.0;
+			float q = 0;
 			float w = 1;
-			float j = 1; */
-			srand(SEED);
-			float q = rand()%100; q/=100; q+=.5;
-			float w = rand()%100; w/=100; w+=.5;
-			float j = rand()%100; j/=100; j+=.5;
-			//cout << "r:" << red << " g:" << gre << " b:" << blu << endl;
-			cs.insert(cs.end(), {red-g[3]*q, gre-g[3]*w, blu-g[3]*j, 1,
-        						 red-g[1]*q, gre-g[1]*w, blu-g[1]*j, 1, 
-        						 red-g[0]*q, gre-g[0]*w, blu-g[0]*j, 1,
-    							 red-g[2]*q, gre-g[2]*w, blu-g[2]*j, 1 } ); 
+			float j = 1;
+			cs.insert(cs.end(), {red+g[3]*q, gre-g[3]*w, blu-g[3]*j, 1,
+        						 red+g[1]*q, gre-g[1]*w, blu-g[1]*j, 1, 
+        						 red+g[0]*q, gre-g[0]*w, blu-g[0]*j, 1,
+    							 red+g[2]*q, gre-g[2]*w, blu-g[2]*j, 1 } ); 
 			/*cs.insert(cs.end(), {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 } );*/
 			c += 1;
 		}
@@ -1161,13 +1149,7 @@ int main(int argc, char** argv)
 
 	glEnable( GL_DEPTH_TEST );
     glDepthFunc( GL_LESS );
-
-			red = rand() % 255; red/=155;
-			gre = rand() % 255; gre/=155;
-			blu = rand() % 255; blu/=155;
-			glClearColor(red,gre,blu,1.0);
-
-    //glClearColor( 80.0/255.0, 170/255.0, 220.0/255.0, 1.0 );
+    glClearColor( 80.0/255.0, 170/255.0, 220.0/255.0, 1.0 );
     glViewport( 0, 0, WIDTH, HEIGHT );
 
     //VAO?
