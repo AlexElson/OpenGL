@@ -821,11 +821,11 @@ void initLand(Primitives &o, const char* file, int chunk_x, int chunk_y){
         SOIL_free_image_data(image);
 	}else{	
    		float pixels[] = {
-    		.9f, .8f, .58f,   .8f, .7f, .6f,
-    		.75f, .7f, .5f,   .86f, .77f, .62f,
+    		.9f, .8f, .58f,   //.8f, .7f, .6f,
+    		//.75f, .7f, .5f,   .86f, .77f, .62f,
 		};
 	    //Target active unit, level, internalformat, width, height, border, format, type, data
-	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2,
+	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1,
 	    	0, GL_RGB, GL_FLOAT, pixels);
     }
 
