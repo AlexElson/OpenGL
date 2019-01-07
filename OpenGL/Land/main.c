@@ -16,7 +16,7 @@
 
 using namespace std;
 
-const int WIDTH = 1400;
+const int WIDTH = 1200;
 const int HEIGHT = 800;
 
 static const char* vertex_source = 
@@ -556,23 +556,24 @@ Primitives oneLand, twoLand, threeLand, fourLand;
 
 struct moveMent {
 	float px = 0; //Player Position
-	float py = -10;
+	float py = -0;
 	float pz = 1;
 	float lx = 0; //Look
-	float ly = -10.25;
+	float ly = -0.25;
 	float lz = 0;
 	float turn = -90;
 	int moveUp = 0;
 	int moveDown = 0;
 	int moveLeft = 0;
 	int moveRight = 0;
+	int jumping = 0;
+	float jump_vec = 0.0;
 } user;
 
 void NormalKeyHandler(unsigned char key, int x, int y){
-	if (key == 32){ //Space
-		cout << "Jump" << endl;
-		user.py = user.py + 5;
-		user.ly = user.ly + 5;
+	if (key == 32 && user.jumping == 0){ //Space
+		user.jumping = 1;
+		user.jump_vec = .6;
 	}
 	if (key == 120){
 		user.py = user.py -4;
@@ -597,12 +598,12 @@ void SpecialKeyHandler(int key, int x, int y){
 }
 
 void smoothNavigate(){
-	float e = .15;
+	float e = 3.15;
 	if (user.moveRight == 1){
-		user.turn += 5;
+		user.turn += 4;
 	}
 	if (user.moveLeft == 1){
-		user.turn -= 5;
+		user.turn -= 4;
 	}
 	if (user.moveUp){
 		user.px = user.px + cos(user.turn*3.14/180)*e;
@@ -612,6 +613,58 @@ void smoothNavigate(){
 		user.px = user.px - cos(user.turn*3.14/180)*e;
         user.pz = user.pz - sin(user.turn*3.14/180)*e; 
 	}
+	//Jumping with velocity
+	if (user.jumping == 1){
+		user.jump_vec -= .02;
+		user.ly += user.jump_vec;
+		user.py += user.jump_vec;
+	}
+
+	//Hit Detection
+	if (user.jumping == 1 || user.moveRight == 1 || user.moveLeft == 1 || user.moveUp == 1 || user.moveDown == 1){
+		int ls = 216; //land size
+		float cx = 0.0 + ls;
+		float cy = 0.0 + ls;
+		float x = user.px * .21;
+		float y = user.pz * .21;
+		float h[] = {0,0,0,0};
+		float H[] = {0,0,0,0};
+		for (int it = 0; it < 4; it++){
+			int iy = it % 2;
+			int ix = floor(it/2);
+			float temp_x = (x+ix+cx-ls);
+			float temp_y = (y+iy+cy-ls);
+			float z = sqrt( temp_x * temp_x + temp_y * temp_y) / (128.0) * 2.5;
+			if (z > 4){ z = 4; }
+			//Fine Ridges
+			h[it] = ridgenoise( (y+iy+cy)*.025, (x+ix+cx)*.025,  1, 1);
+			if (h[it] >= .9) h[it] = h[it] = .9;
+			//Rolling Mountains (height of ridges across an area)
+			H[it] = perlin2d( (y+iy+cy)*.015, (x+ix+cx)*.015, .5, 1)+1;
+			h[it] = pow(h[it], 2);
+			H[it] = pow(H[it], z*2);
+			if (z < .5) h[it]*=(z*2);
+			
+		}
+
+		for (int it = 0; it < 4; it++){
+			if (h[1] > h[0]) h[0] = h[1];
+			if (h[2] > h[0]) h[0] = h[2];
+			if (h[3] > h[0]) h[0] = h[2];
+			if (H[1] > H[0]) H[0] = H[1];
+			if (H[2] > H[0]) H[0] = H[2];
+			if (H[3] > H[0]) H[0] = H[3];
+		}
+		if (user.py < h[0]*H[0]-4.5){
+			user.py = h[0]*H[0]-4.5;
+			user.jumping = 0;
+			user.jump_vec = 0.0;
+		}else{
+			user.jumping = 1;
+		}
+		user.ly = user.py-.25;
+	}
+
     user.lx = user.px + cos(user.turn*3.14/180);
     user.lz = user.pz + sin(user.turn*3.14/180);
 }
@@ -748,6 +801,18 @@ void initLand(Primitives &o, const char* file, int chunk_x, int chunk_y){
 			//red = 0.135484; gre = 0.206452; blu = 1.43226;
 			//1.27 0.79 1.54
 
+			//GREEN WHITE
+			//red = 1.43871; gre = 1.31613; blu = 1.1871;
+			//float q = 1.45; float w = 0.58; float j = 1.28;
+
+			//RED
+			//red = 1.47742; gre = 0.083871; blu = 0.16129;
+			//1.44 0.79 1.41
+
+			//TAN DESERT?
+			//red = 1.07097; gre = 0.819355; blu = 0.632258;
+			//1.26 0.76 1.19
+
 
 			srand(SEED);
 			float q = rand()%100; q/=100; q+=.5;
@@ -821,9 +886,10 @@ void initLand(Primitives &o, const char* file, int chunk_x, int chunk_y){
         SOIL_free_image_data(image);
 	}else{	
    		float pixels[] = {
-    		.9f, .8f, .58f,   .8f, .7f, .6f,
-    		.75f, .7f, .5f,   .86f, .77f, .62f,
+    		1.0f, .9f, 1.0f,   .9f, 1.0f, .9f,
+    		1.0f, .9f, .9f,   .9f, .9f, 1.0f,
 		};
+
 	    //Target active unit, level, internalformat, width, height, border, format, type, data
 	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2,
 	    	0, GL_RGB, GL_FLOAT, pixels);
@@ -1202,6 +1268,8 @@ int main(int argc, char** argv)
 			//red = 0.787097; gre = 1.23226; blu = 1.6;
 			//TAN
 			//red = 0.890323; gre = 0.8; blu = 0.735484;
+			//GREEN WHITE
+			//red = 1.43871; gre = 1.31613; blu = 1.1871;
 			cout << "red = " << red << "; gre = " << gre << "; blu = " << blu << ";" << endl;
 			glClearColor(red,gre,blu,1.0);
 
