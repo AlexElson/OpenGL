@@ -1,5 +1,5 @@
-#OpenGL
-A first person simulation of a landscape. Various hues and several levels of perlin noise generation create beautiful vistas and rolling valleys.
+# OpenGL
+A first person simulation of a landscape. Various hues and several levels of perlin noise generation create beautiful vistas and rolling valleys. Creating using C++ with GLUT and OpenGL 3.2. Feel free to download in OpenGL -> Land -> main.c
 
 ![Alt text](/Screenshots/land_golden.png?raw=true "Cover")
 ![Alt text](/Screenshots/land_red.png?raw=true "Cover")
@@ -7,7 +7,7 @@ A first person simulation of a landscape. Various hues and several levels of per
 
 
 
-#WebGL
+# WebGL
 
 Several WebGL projects from Graphics 511 have been uploaded.
 Best run on Firefox (lag free)
