@@ -1,3 +1,13 @@
+#OpenGL
+A first person simulation of a landscape. Various hues and several levels of perlin noise generation create beautiful vistas and rolling valleys.
+
+![Alt text](/Screenshots/land_golden.png?raw=true "Cover")
+![Alt text](/Screenshots/land_red.png?raw=true "Cover")
+
+
+
+#WebGL
+
 Several WebGL projects from Graphics 511 have been uploaded.
 Best run on Firefox (lag free)
 
@@ -7,7 +17,6 @@ https://htmlpreview.github.io/?https://github.com/AlexElson/OpenGL/blob/master/W
 
 ![Alt text](/Screenshots/specular.png?raw=true "Cover")
 ![Alt Text](/Screenshots/webgl_port.png?raw=true "Cover") 
-![Alt text](/Screenshots/webgl_landscape.png?raw=true "Cover")
 
 or
 
