@@ -3,6 +3,7 @@ A first person simulation of a landscape. Various hues and several levels of per
 
 ![Alt text](/Screenshots/land_golden.png?raw=true "Cover")
 ![Alt text](/Screenshots/land_red.png?raw=true "Cover")
+![Alt text](/Screenshots/land_pink.png?raw=true "Cover")
 
 
 
