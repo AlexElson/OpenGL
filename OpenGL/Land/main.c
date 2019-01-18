@@ -16,7 +16,7 @@
 
 using namespace std;
 
-const int WIDTH = 1200;
+const int WIDTH = 1400;
 const int HEIGHT = 800;
 
 static const char* vertex_source = 
@@ -573,7 +573,7 @@ struct moveMent {
 void NormalKeyHandler(unsigned char key, int x, int y){
 	if (key == 32 && user.jumping == 0){ //Space
 		user.jumping = 1;
-		user.jump_vec = .6;
+		user.jump_vec = .3;
 	}
 	if (key == 120){
 		user.py = user.py -4;
@@ -598,7 +598,7 @@ void SpecialKeyHandler(int key, int x, int y){
 }
 
 void smoothNavigate(){
-	float e = 3.15;
+	float e = .15;
 	if (user.moveRight == 1){
 		user.turn += 4;
 	}
@@ -733,8 +733,6 @@ void initLand(Primitives &o, const char* file, int chunk_x, int chunk_y){
 	int ls = 216; //land size
 	float cx = (chunk_x) * ls;
 	float cy = (chunk_y) * ls;
-
-	cout << cx << " " << cy << endl;
 
   	for (int y = 0; y < ls; y++){
 		for (int x = 0; x < ls; x++){
@@ -983,12 +981,13 @@ void initPlane(Primitives &o, const char* file){
 	    	0, GL_RGB, GL_UNSIGNED_BYTE, image);
         SOIL_free_image_data(image);
 	}else{	
-   		float pixels[] = {
-    		.9f, .8f, .58f,   .66f, .54f, .33f,
-    		.66f, .54f, .33f,   .9f, .8f, .58f
-		};
+		int c = 24;
+   		float pixels[c*c*3];
+   		for (int i = 0; i < c*c*3; i++){
+   			pixels[i] = 1.0f;
+   		}
 	    //Target active unit, level, internalformat, width, height, border, format, type, data
-	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 2, 2,
+	    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, c, c,
 	    	0, GL_RGB, GL_FLOAT, pixels);
     }
 
@@ -1177,12 +1176,13 @@ void display(int te){
 	glUniform1f( u.Time, u.Tx);
 
 	//Cube
-	modelMatrix.setTranslate(-1,0,-1);
+	modelMatrix.setTranslate(-3,user.py,-1);
 	modelMatrix.rotate(u.Tx, 1*sin(u.Tx*.01),1,0);
 	render(oneCube);
     
     //Plane
-	modelMatrix.setTranslate(1,0,-1);
+	modelMatrix.setTranslate(1,user.py,-1);
+	modelMatrix.scale(3,3,3);
 	render(onePlane);
 
 	//Land
