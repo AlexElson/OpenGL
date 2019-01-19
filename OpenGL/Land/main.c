@@ -770,48 +770,25 @@ void initLand(Primitives &o, const char* file, int chunk_x, int chunk_y){
 			for(int it = 0; it < 4; it++){
 				g[it] = pow(h[it],1); //*.5+.25
 			}
-			//cout << H[0] << endl;
-			
-			/*float red = 255.0/255.0;
-			float gre = 258/255.0;
-			float blu = 100/255.0;
-			float q = .7;
-			float w = 1;
-			float j = 1; */
 
             //PINK PURPLE
             //float q = 1.26; float w = 1.5; float j = .52;
-            //r 1.28387 g 0.735484 b 1.09677
-
-            //PINK PURPLE 2
-			//red = 1.25806; gre = 0.722581; blu = 1.2;
-			//0.925 0.6375 0.2875
-
-			//TAN
-			//r 0.890323 g 0.8 b 0.735484
-			//float q = 0.91; float w = 1.12; float j = 1.38;
-
-			//WHITE
-			//r 0.787097 g 1.23226 b 1.6
-			//float q = 0.84; float w = 1.13; float j = 1.31;
-
-			//BLUE
-			//red = 0.135484; gre = 0.206452; blu = 1.43226;
-			//1.27 0.79 1.54
-
-			//GREEN WHITE
-			//red = 1.43871; gre = 1.31613; blu = 1.1871;
-			//float q = 1.45; float w = 0.58; float j = 1.28;
 
 			//RED
-			//red = 1.47742; gre = 0.083871; blu = 0.16129;
-			//1.44 0.79 1.41
+			//float q = 1.44; float w = 0.79; float j = 1.41;
+
+			//ARCTIC
+			//float q = 0.84; float w = 1.13; float j = 1.31;
+
+			//DARK SEPIA
+			//float q = 1.26; float w = 0.76; float j = 1.19;
+
+			//DEEP BLUE
+			//float q = 1.27; float w = 0.79; float j = 1.54;
 
 			//TAN DESERT?
 			//red = 1.07097; gre = 0.819355; blu = 0.632258;
-			//1.26 0.76 1.19
-
-
+			
 			srand(SEED);
 			float q = rand()%100; q/=100; q+=.5;
 			float w = rand()%100; w/=100; w+=.5;
@@ -1153,7 +1130,6 @@ void render(Primitives &o){
 
     //DrawElements allows to display Cube, etc, with fewer indices
     glDrawElements( GL_TRIANGLES, o.numIndices, GL_UNSIGNED_INT, 0);
-
    
 }
 
@@ -1264,12 +1240,15 @@ int main(int argc, char** argv)
 			blu = rand() % 255; blu/=155;
 			//PINK PURPLE
 			//red = 1.28387; gre = 0.735484; blu = 1.09677;
-			//WHITE
+			//RED
+			//red = 1.47742; gre = 0.083871; blu = 0.16129;
+			//ARCTIC
 			//red = 0.787097; gre = 1.23226; blu = 1.6;
-			//TAN
-			//red = 0.890323; gre = 0.8; blu = 0.735484;
-			//GREEN WHITE
-			//red = 1.43871; gre = 1.31613; blu = 1.1871;
+			//DARK SEPIA
+			//red = 1.07097; gre = 0.819355; blu = 0.632258;
+			//DEEP BLUE
+			//red = 0.135484; gre = 0.206452; blu = 1.43226;
+			
 			cout << "red = " << red << "; gre = " << gre << "; blu = " << blu << ";" << endl;
 			glClearColor(red,gre,blu,1.0);
 
