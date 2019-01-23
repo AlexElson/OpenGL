@@ -1,4 +1,11 @@
 # OpenGL
+
+To 'make' the following (main.c) within the 'Land' folder you must have the right OpenGL related libraries:
+sudo apt-get install libsoil-dev
+sudo apt-get install freeglut3 freeglut3-dev
+sudo apt-get install libglew-dev
+sudo apt-get install build-essential g++
+
 A first person simulation of a landscape. Various hues and several levels of perlin noise generation create beautiful vistas and rolling valleys. Creating using C++ with GLUT and OpenGL 3.2. Feel free to download in OpenGL -> Land -> main.c
 
 ![Alt text](/Screenshots/land_golden.png?raw=true "Cover")
