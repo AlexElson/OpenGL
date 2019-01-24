@@ -1,4 +1,4 @@
-# OpenGL
+# OpenGL + Surreal Landscapes
 
 To 'make' the following (main.c) within the 'Land' folder you must have the right OpenGL related libraries:
 <br>
