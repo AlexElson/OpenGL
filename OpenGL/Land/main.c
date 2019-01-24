@@ -1154,17 +1154,18 @@ void display(int te){
 	//Cube
 	modelMatrix.setTranslate(-3,user.py,-1);
 	modelMatrix.rotate(u.Tx, 1*sin(u.Tx*.01),1,0);
-	render(oneCube);
+	//render(oneCube);
     
     //Plane
 	modelMatrix.setTranslate(1,user.py,-1);
 	modelMatrix.scale(3,3,3);
-	render(onePlane);
+	//render(onePlane);
 
 	//Land
 	int rrr = SEED % 2;
 	if (rrr == 0) rrr = 2;
 	int s = 48;
+
 	modelMatrix.setScale(s,rrr,s);
 	modelMatrix.translate(0,-8,0);
 	render(oneLand);
