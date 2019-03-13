@@ -18,6 +18,7 @@ using namespace std;
 
 const int WIDTH = 1400;
 const int HEIGHT = 800;
+int makeRand = rand() % 5;
 
 static const char* vertex_source = 
     "   #version 130 \n" 
@@ -570,6 +571,15 @@ struct moveMent {
 	float jump_vec = 0.0;
 } user;
 
+struct colorPack {
+	float red;
+	float gre;
+	float blu;
+	float q;
+	float w;
+	float j;
+} world;
+
 void NormalKeyHandler(unsigned char key, int x, int y){
 	if (key == 32 && user.jumping == 0){ //Space
 		user.jumping = 1;
@@ -706,9 +716,9 @@ GLuint initShader( GLenum type, const char* source ){
 
 //https://www.opengl.org/archives/resources/code/samples/glut_examples/examples/examples.html
 
-float red;
-float gre;
-float blu;
+//float red;
+//float gre;
+//float blu;
 
 void initLand(Primitives &o, const char* file, int chunk_x, int chunk_y){
 	// Create a Plane
@@ -771,31 +781,21 @@ void initLand(Primitives &o, const char* file, int chunk_x, int chunk_y){
 				g[it] = pow(h[it],1); //*.5+.25
 			}
 
-            //PINK PURPLE
-            //float q = 1.26; float w = 1.5; float j = .52;
+			if (makeRand != 0){
+				world.q = world.q;
+				world.w = world.w;
+				world.j = world.j;
+			}
 
-			//RED
-			//float q = 1.44; float w = 0.79; float j = 1.41;
-
-			//ARCTIC
-			//float q = 0.84; float w = 1.13; float j = 1.31;
-
-			//DARK SEPIA
-			//float q = 1.26; float w = 0.76; float j = 1.19;
-
-			//DEEP BLUE
-			//float q = 1.27; float w = 0.79; float j = 1.54;
-
-			//TAN DESERT?
-			//red = 1.07097; gre = 0.819355; blu = 0.632258;
-			
 			srand(SEED);
-			float q = rand()%100; q/=100; q+=.5;
-			float w = rand()%100; w/=100; w+=.5;
-			float j = rand()%100; j/=100; j+=.5;
 			if (y == 0 && x == 0)
-				cout << q << " " << w << " " << j << endl;
+				cout << "world.q = " << 
+					world.q << "; world.w = " << world.w 
+					<< "; world.j = " <<  world.j << ";" << endl;
 			//cout << "r:" << red << " g:" << gre << " b:" << blu << endl;
+			float red = world.red; float q = world.q;
+			float gre = world.gre; float w = world.w;
+			float blu = world.blu; float j = world.j;
 			cs.insert(cs.end(), {red-g[3]*q, gre-g[3]*w, blu-g[3]*j, 1,
         						 red-g[1]*q, gre-g[1]*w, blu-g[1]*j, 1, 
         						 red-g[0]*q, gre-g[0]*w, blu-g[0]*j, 1,
@@ -1149,7 +1149,7 @@ void display(int te){
 	viewMatrix.setLookAt(user.px, user.py, user.pz,    user.lx, user.ly, user.lz,    0.0, 1.0, 0.0);
 
 	//Update Time
-	glUniform1f( u.Time, u.Tx);
+	glUniform1f( u.Time, u.Tx );
 
 	//Cube
 	modelMatrix.setTranslate(-3,user.py,-1);
@@ -1185,11 +1185,12 @@ void display(int te){
     glutSwapBuffers();
 }
 
-
-
-
 int main(int argc, char** argv)
 {
+
+	printf("Input World Color Type, 0-13. 0 is Random: \n");
+    int world_color;
+    scanf("%i", &world_color);
 
 	srand(time(0));
 	SEED = rand() % 999;
@@ -1201,7 +1202,7 @@ int main(int argc, char** argv)
     
     glutInitWindowSize(WIDTH, HEIGHT);
     glutInitWindowPosition(100,100);
-    glutCreateWindow("OpenGL - First window demo");
+    glutCreateWindow("OpenGL - Surreal Landscapes");
     glutSpecialFunc(SpecialKeyHandler);
     glutSpecialUpFunc(SpecialKeyUpHandler);
     glutKeyboardFunc(NormalKeyHandler);
@@ -1236,22 +1237,115 @@ int main(int argc, char** argv)
 	glEnable( GL_DEPTH_TEST );
     glDepthFunc( GL_LESS );
 
-			red = rand() % 255; red/=155;
-			gre = rand() % 255; gre/=155;
-			blu = rand() % 255; blu/=155;
-			//PINK PURPLE
-			//red = 1.28387; gre = 0.735484; blu = 1.09677;
-			//RED
-			//red = 1.47742; gre = 0.083871; blu = 0.16129;
-			//ARCTIC
-			//red = 0.787097; gre = 1.23226; blu = 1.6;
-			//DARK SEPIA
-			//red = 1.07097; gre = 0.819355; blu = 0.632258;
-			//DEEP BLUE
-			//red = 0.135484; gre = 0.206452; blu = 1.43226;
-			
-			cout << "red = " << red << "; gre = " << gre << "; blu = " << blu << ";" << endl;
-			glClearColor(red,gre,blu,1.0);
+    makeRand = rand() % 13; makeRand = world_color;
+
+	if (makeRand == 0){
+		printf("TOTAL RANDOM\n");
+		world.red = rand() % 255; world.red/=155;
+		world.gre = rand() % 255; world.gre/=155;
+		world.blu = rand() % 255; world.blu/=155;
+		world.q = rand()%100; world.q/=100; world.q+=.5;
+    	world.w = rand()%100; world.w/=100; world.w+=.5;
+		world.j = rand()%100; world.j/=100; world.j+=.5;
+	}
+
+	//PINK PURPLE
+	if (makeRand == 1){ 
+		printf("PINK PURPLE\n");
+		world.red = 1.28387; world.gre = 0.735484; world.blu = 1.09677; 
+		world.q = 1.26; world.w = 1.5; world.j = .52;
+	}
+	//DEEP RED
+	if (makeRand == 2){ 
+		printf("DEEP RED\n");
+		world.red = 1.47742; world.gre = 0.083871; world.blu = 0.16129; 
+		world.q = 1.44;  world.w = 0.79;  world.j = 1.41;
+	}
+	//ARCTIC
+	if (makeRand == 3){ 
+		printf("ARCTIC\n");
+		world.red = 0.787097; world.gre = 1.23226; world.blu = 1.6;
+		world.q = 0.84;  world.w = 1.13;  world.j = 1.31;
+	}
+	//DARK SEPIA
+	if (makeRand == 4){ 
+		printf("DARK SEPIA\n");
+		world.red = 1.07097; world.gre = 0.819355; world.blu = 0.632258; 
+		world.q = 1.26;  world.w = 0.76;  world.j = 1.19; 
+	}
+	//DEEP BLUE
+	if (makeRand == 5){ 
+		printf("DEEP BLUE\n");
+		world.red = 0.135484; world.gre = 0.206452; world.blu = 1.43226; 
+		world.q = 1.27;  world.w = 0.79;  world.j = 1.54;
+	}
+	//GREEN MATRIX
+	if (makeRand == 6){ 
+		printf("GREEN MATRIX\n");
+		world.red = 0.219355; world.gre = 1.14194; world.blu = 0.548387; 
+		world.q = 0.66; world.w = 0.92; world.j = 0.77;
+	}
+	//COLD
+	if (makeRand == 7){
+		printf("COLD\n");
+		world.red = 0.812903; world.gre = 0.703226; world.blu = 1.40645;
+		world.q = 1.34; world.w = 1.31; world.j = 1.38;
+	}
+	//VELVET
+	if (makeRand == 8){ 
+		printf("VELVET\n");
+		world.red = 216/255.0; world.gre = 255/255.0; world.blu = 171/255.0;
+		world.q = .7; world.w = 2.3; world.j = 1.3;
+	}
+	//EXTREME
+	if (makeRand == 9){
+		printf("EXTREME");
+		world.red = rand() % 255; world.red/=155;
+		world.gre = rand() % 255; world.gre/=155;
+		world.blu = rand() % 255; world.blu/=155;
+		world.q = rand()%100*10; world.q/=100; world.q+=.5;
+    	world.w = rand()%100*10; world.w/=100; world.w+=.5;
+		world.j = rand()%100*10; world.j/=100; world.j+=.5;
+	}
+	//MURPHY LIGHT
+	if (makeRand == 10){
+		printf("MURPHY LIGHT\n");
+		world.red = 1.03226; world.gre = 1.30968; world.blu = 0.812903;
+		world.q = 1.24; world.w = 1.46; world.j = 0.61;
+	}
+	//GRAYED
+	if (makeRand == 11){
+		printf("GRAYED\n");
+		world.q = rand()%100; world.q/=100; world.q+=.5;
+    	world.w = rand()%100; world.w/=100; world.w+=.5;
+		world.j = rand()%100; world.j/=100; world.j+=.5;
+		world.red = .7;
+		world.gre = .7;
+		world.blu = .7;
+	}
+	//BLUE DESERT
+	if (makeRand == 12){
+		printf("BLUE DESERT\n");
+		world.red = 230/255.0; world.gre = 255/255.0; world.blu = 171/255.0;
+		world.q = 1.41; world.w = 0.79; world.j = 0.14;
+	}
+	//RED DESERT
+	if (makeRand == 13){
+		printf("RED DESERT\n");
+		world.red = 216/255.0; world.gre = 255/255.0; world.blu = 151/255.0;
+		world.q = .4; world.w = 1.11; world.j = 1.1;
+	}
+	
+
+	cout << "world.red = " << world.red << "; world.gre = " << 
+		world.gre << "; world.blu = " << world.blu << ";" << endl;
+
+	if (makeRand != 10 && makeRand != 13){
+		glClearColor(world.red,world.gre,world.blu,1.0);
+	}else{
+		//light blue sky
+		glClearColor(180/255.0, 223/255.0,  219/255.0,  1.0);
+	}
 
     //glClearColor( 80.0/255.0, 170/255.0, 220.0/255.0, 1.0 );
     glViewport( 0, 0, WIDTH, HEIGHT );
